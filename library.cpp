@@ -64,6 +64,11 @@ namespace K_means_lib
     }
 
     auto threads_number_optional = settings.get_optional<size_t>("Threads number");
+    size_t threads_number = threads_number_optional.get_value_or(1);
+    if (threads_number == 0)
+    {
+      threads_number = 1;
+    }
 
     boost::iostreams::mapped_file mmap;
 
@@ -129,7 +134,7 @@ namespace K_means_lib
             std::move(data_buffer),
             line_number - 1,
             clusters_number_optional.value(),
-            1
+            threads_number
         );
   }
 
@@ -142,20 +147,27 @@ namespace K_means_lib
     for (const auto& cluster_result : result)
     {
       std::string cluster_string;
-      for (size_t i = 0; i < cluster_result._center.size() - 1; ++i)
+      if (cluster_result._center.size() > 0)
       {
-        cluster_string += std::to_string(cluster_result._center[i]) + ", ";
+        for (size_t i = 0; i < cluster_result._center.size() - 1; ++i)
+        {
+          cluster_string += std::to_string(cluster_result._center[i]) + ", ";
+        }
+
+        cluster_string += std::to_string(cluster_result._center.back()) + "\n";
       }
 
-      cluster_string += std::to_string(cluster_result._center.back()) + "\n";
 
 
-      for (size_t i = 0; i < cluster_result._points.size() - 1; ++i)
+      if (cluster_result._points.size() > 0)
       {
-        cluster_string += std::to_string(cluster_result._points[i]) + ", ";
-      }
+        for (size_t i = 0; i < cluster_result._points.size() - 1; ++i)
+        {
+          cluster_string += std::to_string(cluster_result._points[i]) + ", ";
+        }
 
-      cluster_string += std::to_string(cluster_result._points.back()) + "\n";
+        cluster_string += std::to_string(cluster_result._points.back()) + "\n";
+      }
 
       cluster_string += "\n";
 
@@ -164,13 +176,29 @@ namespace K_means_lib
       result_strings.emplace_back(std::move(cluster_string));
     }
 
+    {  //Create a file
+      std::filebuf fbuf;
+      fbuf.open(result_filename, std::ios_base::in | std::ios_base::out | std::ios_base::trunc | std::ios_base::binary);
+      //Set the size
+      fbuf.pubseekoff(total_file_size - 1, std::ios_base::beg);
+      fbuf.sputc(0);
+    }
+
+
     boost::iostreams::mapped_file_params params;
     params.path = result_filename;
     params.length = total_file_size;
     params.flags = boost::iostreams::mapped_file::mapmode::readwrite;
 
-    boost::iostreams::stream<boost::iostreams::mapped_file_sink> out(params);
+    try
+    {
+      boost::iostreams::stream<boost::iostreams::mapped_file_sink> out(params);
 
-    copy(result_strings.begin(), result_strings.end(), std::ostream_iterator<std::string>(out, "\n"));
+      copy(result_strings.begin(), result_strings.end(), std::ostream_iterator<std::string>(out, "\n"));
+    }
+    catch (const std::ios_base::failure& error)
+    {
+      std::cerr << "File reading error: " << error.what() << std::endl;
+    }
   }
 }

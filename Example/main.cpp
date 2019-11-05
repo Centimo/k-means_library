@@ -6,23 +6,25 @@
 
 int main()
 {
-  /*
+
 std::random_device rd;
 std::mt19937 generator(rd());
 std::uniform_real_distribution<float> uniform_distribution(0.0, 10.0);
 
 
-std::ofstream output_stream("data.txt", std::ios::out);
-for (int i = 0; i < 150; ++i)
-{
-  for (int j = 0; j < 19; ++j)
   {
-    output_stream << uniform_distribution(generator) << ", ";
+    std::ofstream output_stream("data.txt", std::ios::out);
+    for (int i = 0; i < 150; ++i)
+    {
+      for (int j = 0; j < 19; ++j)
+      {
+        output_stream << uniform_distribution(generator) << ", ";
+      }
+
+      output_stream << uniform_distribution(generator) << "\n";
+    }
   }
 
-  output_stream << uniform_distribution(generator) << "\n";
-}
- */
 
   auto processor = K_means_lib::make_k_means_processor("config.txt");
   if (!processor)
