@@ -85,7 +85,7 @@ class Atomic_buffer
     const size_t elements_per_part = elements_number / parts_number;
     const size_t parts_with_additional_element = elements_number % parts_number;
 
-    for (size_t i = 0; i < parts_with_additional_element; i++)
+    for (size_t i = 0; i < parts_with_additional_element; ++i)
     {
       result.emplace_back(
           Part(
@@ -94,7 +94,7 @@ class Atomic_buffer
             )));
     }
 
-    for (size_t i = 0; i < parts_number - parts_with_additional_element; i++)
+    for (size_t i = 0; i < parts_number - parts_with_additional_element; ++i)
     {
       result.emplace_back(
           Part(
@@ -152,6 +152,16 @@ public:
     return _elements[index];
   }
 
+  std::vector<Value_type> get_buffer()
+  {
+    return std::move(_elements);
+  }
+
+  void clear(const Value_type& value)
+  {
+    _elements.assign(_elements.size(), value);
+  }
+
 private:
   std::vector<Part> _parts;
   Buffer<Value_type> _elements;
@@ -176,14 +186,6 @@ public:
     }
 
     return result;
-  }
-
-  void clear(const Range& range)
-  {
-    for (size_t i = 0; i < range._length; ++i)
-    {
-      (*this)[range._first_element_index + i] = 0.0;
-    }
   }
 };
 

@@ -13,6 +13,12 @@ void K_means_processor::thread_worker(size_t thread_index)
 {
   Thread_data& thread_data = *_threads[thread_index];
 
+  std::set<size_t> _linked_clusters;
+  for (size_t i = thread_data._index; i < _clusters.size(); i += _threads.size())
+  {
+    _linked_clusters.insert(i);
+  }
+
   do
   {
     bool is_changed_local = true;
@@ -50,6 +56,13 @@ void K_means_processor::thread_worker(size_t thread_index)
       break;
     }
 
+    for (const auto cluster_index : _linked_clusters)
+    {
+      _clusters[cluster_index]._buffer.clear(0.0);
+    }
+
+    synchronize_threads();
+
     for (Point& point : thread_data._points_range.make_linked_range(_points))
     {
       _clusters[point._cluster]._buffer.atomic_write(
@@ -63,9 +76,9 @@ void K_means_processor::thread_worker(size_t thread_index)
 
     synchronize_threads();
 
-    if (thread_data._index < _clusters.size())
+    for (const auto cluster_index : _linked_clusters)
     {
-      _clusters[thread_data._index]._size.store(0, std::memory_order::memory_order_relaxed);
+      _clusters[cluster_index]._size.store(0, std::memory_order::memory_order_relaxed);
     }
 
     synchronize_threads();
