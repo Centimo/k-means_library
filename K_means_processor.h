@@ -57,6 +57,13 @@ private:
     Thread_data(Range&& range, size_t index, std::thread&& thread);
   };
 
+public:
+  struct Cluster_result
+  {
+    std::vector<float> _center;
+    std::deque<size_t> _points;
+  };
+
 private:
   void synchronize_threads();
   bool is_converged();
@@ -64,8 +71,10 @@ private:
 
 public:
   K_means_processor(Buffer<float>&& values_buffer, size_t points_number, size_t clusters_number, size_t threads_number);
+  ~K_means_processor();
 
   void start();
+  std::vector<Cluster_result> get_result();
 
 private:
   Buffer<float> _buffer;

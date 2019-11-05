@@ -193,6 +193,42 @@ void K_means_processor::start()
   }
 }
 
+std::vector<K_means_processor::Cluster_result> K_means_processor::get_result()
+{
+  for (auto& thread : _threads)
+  {
+    if (thread->_thread.joinable())
+    {
+      thread->_thread.join();
+    }
+  }
+
+  std::vector<Cluster_result> result(_clusters.size());
+
+  for (size_t i = 0; i < _clusters.size(); ++i)
+  {
+    result[i]._center = _clusters[i]._buffer.get_buffer();
+  }
+
+  for (size_t i = 0; i < _points.size(); ++i)
+  {
+    result[_points[i]._cluster]._points.emplace_back(i);
+  }
+
+  return result;
+}
+
+K_means_processor::~K_means_processor()
+{
+  for (auto& thread : _threads)
+  {
+    if (thread->_thread.joinable())
+    {
+      thread->_thread.join();
+    }
+  }
+}
+
 K_means_processor::Thread_data::Thread_data(Range&& range, size_t index, std::thread&& thread)
   : _points_range(range),
     _index(index),
