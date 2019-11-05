@@ -1,0 +1,6 @@
+{
+    "Data filename" : "data.txt",
+    "Clusters number" : 3,
+    "Dimensions number" : 20,
+    "Points number" : 150
+}
