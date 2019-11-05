@@ -9,9 +9,9 @@
 #include "K_means_processor.h"
 
 
-void K_means_processor::thread_worker(size_t thread_index)
+void K_means_processor::thread_worker(Thread_data& thread_data)
 {
-  Thread_data& thread_data = *_threads[thread_index];
+  // Thread_data& thread_data = *_threads[thread_index];
 
   std::set<size_t> _linked_clusters;
   for (size_t i = thread_data._index; i < _clusters.size(); i += _threads.size())
@@ -137,7 +137,7 @@ K_means_processor::K_means_processor(Buffer<float>&& values_buffer,
   : _threads_number(threads_number),
     _buffer(values_buffer),
     _synchronizer(0),
-    _is_sync_up(false)
+    _is_sync_up(true)
 {
   size_t range_size = _buffer.size() / points_number;
   _points.reserve(points_number);
@@ -183,26 +183,26 @@ void K_means_processor::start()
 
   for (size_t i = 0; i < threads_with_additional_point; ++i)
   {
-    _threads[i] = ( std::make_unique<Thread_data>(
+    _threads[i] = std::make_unique<Thread_data>(
+        std::ref(*this),
         Range {
           i * (points_per_thread + 1),
           points_per_thread + 1
         },
-        i,
-        std::thread(&K_means_processor::thread_worker, std::ref(*this), i)
-    ));
+        i
+    );
   }
 
   for (size_t i = 0; i < _threads_number - threads_with_additional_point; ++i)
   {
-    _threads[i + threads_with_additional_point - 1] = ( std::make_unique<Thread_data>(
+    _threads[i + threads_with_additional_point] = std::make_unique<Thread_data>(
+        std::ref(*this),
         Range {
-            (threads_with_additional_point - 1) * (points_per_thread + 1) + i * points_per_thread,
+            threads_with_additional_point * (points_per_thread + 1) + i * points_per_thread,
             points_per_thread
         },
-        i,
-        std::thread(&K_means_processor::thread_worker, std::ref(*this), i)
-    ));
+        i
+    );
   }
 }
 
@@ -242,9 +242,9 @@ K_means_processor::~K_means_processor()
   }
 }
 
-K_means_processor::Thread_data::Thread_data(Range&& range, size_t index, std::thread&& thread)
+K_means_processor::Thread_data::Thread_data(K_means_processor& processor, Range&& range, size_t index)
   : _points_range(range),
     _index(index),
     _is_changed(false),
-    _thread(std::move(thread))
+    _thread(&K_means_processor::thread_worker, &processor, std::ref(*this))
 { }

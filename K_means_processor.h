@@ -54,7 +54,7 @@ private:
 
     std::thread _thread;
 
-    Thread_data(Range&& range, size_t index, std::thread&& thread);
+    Thread_data(K_means_processor& processor, Range&& range, size_t index);
   };
 
 public:
@@ -67,7 +67,7 @@ public:
 private:
   void synchronize_threads();
   bool is_converged();
-  void thread_worker(size_t thread_index);
+  void thread_worker(Thread_data& thread_data);
 
 public:
   K_means_processor(Buffer<float>&& values_buffer, size_t points_number, size_t clusters_number, size_t threads_number);

@@ -99,7 +99,7 @@ class Atomic_buffer
       result.emplace_back(
           Part(
             Linked_range<Buffer, Value_type>(
-              Range{ (parts_with_additional_element - 1) * (elements_per_part + 1) + i * elements_per_part, elements_per_part },
+              Range{ parts_with_additional_element * (elements_per_part + 1) + i * elements_per_part, elements_per_part },
                     buffer
             )));
     }
