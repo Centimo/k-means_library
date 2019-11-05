@@ -53,15 +53,19 @@ private:
     mutable std::atomic<bool> _is_changed;
 
     std::thread _thread;
+
+    Thread_data(Range&& range, size_t index, std::thread&& thread);
   };
 
 private:
   void synchronize_threads();
   bool is_converged();
-  void thread_worker(const Thread_data& thread_data);
+  void thread_worker(size_t thread_index);
 
 public:
   K_means_processor(Buffer<float>&& values_buffer, size_t points_number, size_t clusters_number, size_t threads_number);
+
+  void start();
 
 private:
   Buffer<float> _buffer;
@@ -70,7 +74,7 @@ private:
   std::vector<Cluster> _clusters;
 
   std::vector<std::unique_ptr<Thread_data> > _threads;
-  const size_t _thread_number;
+  const size_t _threads_number;
 
   std::atomic<size_t> _synchronizer;
   std::atomic<bool> _is_sync_up;
