@@ -133,6 +133,7 @@ public:
           }
 
           parts_processing_indicators[part_index] = true;
+          part._is_busy.clear();
         }
         else
         {
