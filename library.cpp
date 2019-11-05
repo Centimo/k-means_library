@@ -6,6 +6,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
+#include <boost/iostreams/stream.hpp>
 #include <boost/tokenizer.hpp>
 
 std::unique_ptr<K_means_processor> make_k_means_processor(const std::string& config_filename)
@@ -103,9 +104,52 @@ std::unique_ptr<K_means_processor> make_k_means_processor(const std::string& con
     return nullptr;
   }
 
-  return std::make_unique<K_means_processor>(
+  return
+    std::make_unique<K_means_processor>(
       std::move(data_buffer),
       line_number - 1,
       clusters_number_optional.value(),
-      1);
+      1
+    );
+}
+
+void print_result_to_file(const std::string& result_filename, std::vector<K_means_processor::Cluster_result>&& result)
+{
+  std::vector<std::string> result_strings;
+  result_strings.reserve(result.size());
+  unsigned long long total_file_size = 0;
+
+  for (const auto& cluster_result : result)
+  {
+    std::string cluster_string;
+    for (size_t i = 0; i < cluster_result._center.size() - 1; ++i)
+    {
+      cluster_string += std::to_string(cluster_result._center[i]) + ", ";
+    }
+
+    cluster_string += std::to_string(cluster_result._center.back()) + "\n";
+
+
+    for (size_t i = 0; i < cluster_result._points.size() - 1; ++i)
+    {
+      cluster_string += std::to_string(cluster_result._points[i]) + ", ";
+    }
+
+    cluster_string += std::to_string(cluster_result._points.back()) + "\n";
+
+    cluster_string += "\n";
+
+
+    total_file_size += cluster_string.size();
+    result_strings.emplace_back(std::move(cluster_string));
+  }
+
+  boost::iostreams::mapped_file_params params;
+  params.path = result_filename;
+  params.length = total_file_size;
+  params.flags = boost::iostreams::mapped_file::mapmode::readwrite;
+
+  boost::iostreams::stream<boost::iostreams::mapped_file_sink> out(params);
+
+  copy(result_strings.begin(), result_strings.end(), std::ostream_iterator<std::string>(out, "\n"));
 }
