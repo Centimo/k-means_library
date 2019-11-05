@@ -125,7 +125,12 @@ public:
       for (size_t part_index = 0; part_index < parts_processing_indicators.size(); ++part_index)
       {
         Part& part = _parts[part_index];
-        if (!parts_processing_indicators[part_index] && !part._is_busy.test_and_set())
+        if (parts_processing_indicators[part_index])
+        {
+          continue;
+        }
+
+        if (!part._is_busy.test_and_set())
         {
           for (size_t i = 0; i < part._range._length; ++i)
           {
