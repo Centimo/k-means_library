@@ -168,11 +168,11 @@ K_means_processor::K_means_processor(Buffer<float>&& values_buffer,
   for (const auto& point_index : random_points)
   {
     _clusters.emplace_back(
-        Cluster {
-            Atomic_buffer<float>(_points[point_index]._range.make_linked_range(values_buffer), parts_number),
-            cluster_index,
-            0
-        });
+                _points[point_index]._range.make_linked_range(values_buffer),
+                parts_number,
+                cluster_index,
+                0
+              );
 
     ++cluster_index;
   }

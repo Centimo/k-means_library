@@ -64,7 +64,7 @@ class Atomic_buffer
   struct Part
   {
     Linked_range<Buffer, Value_type> _range;
-    std::atomic_flag _is_busy;
+    mutable std::atomic_flag _is_busy;
 
     Part(const Part& copy)
         : _range(copy._range),

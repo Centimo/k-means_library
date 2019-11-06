@@ -34,8 +34,8 @@ private:
         _size(copy._size.load())
     { }
 
-    Cluster(Atomic_buffer<float>&& buffer, size_t index, size_t size)
-      : _buffer(buffer),
+    Cluster(const Linked_range<Buffer, float>& range, size_t parts_number, size_t index, size_t size)
+      : _buffer(range, parts_number),
         _index(index),
         _size(size)
     { }
