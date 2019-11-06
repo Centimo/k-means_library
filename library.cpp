@@ -18,7 +18,7 @@ namespace K_means_lib
     {
       boost::property_tree::read_json(config_filename, settings);
     }
-    catch (boost::property_tree::json_parser_error error)
+    catch (boost::property_tree::json_parser_error& error)
     {
       std::cerr << "File reading error: " << error.what() <<  std::endl;
       return nullptr;
@@ -130,15 +130,15 @@ namespace K_means_lib
     }
 
     return
-        std::make_unique<K_means_processor>(
-            std::move(data_buffer),
-            line_number - 1,
-            clusters_number_optional.value(),
-            threads_number
-        );
+      std::make_unique<K_means_processor>(
+        std::move(data_buffer),
+        line_number - 1,
+        clusters_number_optional.value(),
+        threads_number
+      );
   }
 
-  void print_result_to_file(const std::string& result_filename, std::vector<K_means_processor::Cluster_result>&& result)
+  void print_result_to_file(const std::string& result_filename, const std::vector<K_means_processor::Cluster_result>& result)
   {
     std::vector<std::string> result_strings;
     result_strings.reserve(result.size());
@@ -147,7 +147,7 @@ namespace K_means_lib
     for (const auto& cluster_result : result)
     {
       std::string cluster_string;
-      if (cluster_result._center.size() > 0)
+      if (!cluster_result._center.empty())
       {
         for (size_t i = 0; i < cluster_result._center.size() - 1; ++i)
         {
@@ -159,7 +159,7 @@ namespace K_means_lib
 
 
 
-      if (cluster_result._points.size() > 0)
+      if (!cluster_result._points.empty())
       {
         for (size_t i = 0; i < cluster_result._points.size() - 1; ++i)
         {
@@ -198,7 +198,7 @@ namespace K_means_lib
     }
     catch (const std::ios_base::failure& error)
     {
-      std::cerr << "File reading error: " << error.what() << std::endl;
+      std::cerr << "File writing error: " << error.what() << std::endl;
     }
   }
 }

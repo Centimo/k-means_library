@@ -8,6 +8,7 @@
 #include <vector>
 #include <functional>
 #include <cmath>
+#include <iostream>
 
 
 template <template <typename> class Container_type, typename Value_type>
@@ -79,7 +80,7 @@ class Atomic_buffer
 
     explicit
     Part(Linked_range<Buffer, Value_type>&& range)
-        : _range(range),
+        : _range(std::forward<Linked_range<Buffer, Value_type> >(range)),
           _is_busy(ATOMIC_FLAG_INIT)
     { }
   };
