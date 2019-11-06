@@ -40,9 +40,15 @@ public:
       _buffer(buffer)
   {  }
 
-  Value_type& operator[] (size_t index) const
+
+  const Value_type& operator[] (size_t index) const
   {
-    return _buffer[_first_element_index + _length];
+    return _buffer[_first_element_index + index];
+  }
+
+  Value_type& operator[] (size_t index)
+  {
+    return _buffer[_first_element_index + index];
   }
 
   [[nodiscard]]
@@ -109,9 +115,10 @@ class Atomic_buffer
 
 public:
   explicit Atomic_buffer(const Linked_range<Buffer, Value_type>& range, size_t parts_number)
-    : _elements(range),
-      _parts(make_parts(_elements, _elements.size(), parts_number))
-  {  }
+    : _elements(range)
+  {
+    _parts = make_parts(_elements, _elements.size(), parts_number);
+  }
 
   void atomic_write(const std::function<void (Value_type&, size_t)>& function)
   {
