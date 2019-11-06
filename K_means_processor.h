@@ -85,6 +85,6 @@ private:
   std::vector<std::unique_ptr<Thread_data> > _threads;
   const size_t _threads_number;
 
-  std::atomic<size_t> _synchronizer;
-  std::atomic<bool> _is_sync_up;
+  std::atomic<size_t> _synchronization_phase_in;
+  std::atomic<size_t> _synchronization_phase_out;
 };

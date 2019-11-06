@@ -89,32 +89,25 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
 
 void K_means_processor::synchronize_threads()
 {
-  size_t value = 0;
+  size_t value = _threads_number;
 
-  if (_is_sync_up.load())
+  while (_synchronization_phase_out.load() % _threads_number != 0)
   {
-    value = _synchronizer.fetch_add(1) + 1;
-
-    while (value != _threads_number)
-    {
-      std::this_thread::sleep_for(std::chrono::microseconds(10));
-      value = _synchronizer.load();
-    }
-
-    _is_sync_up.store(false);
+    std::this_thread::sleep_for(std::chrono::microseconds(10));
   }
-  else
+
+  _synchronization_phase_out.compare_exchange_strong(value, 0);
+
+  value = _synchronization_phase_in.fetch_add(1) + 1;
+  while (value % _threads_number != 0)
   {
-    value = _synchronizer.fetch_sub(1) - 1;
-
-    while (value != 0)
-    {
-      std::this_thread::sleep_for(std::chrono::microseconds(10));
-      value = _synchronizer.load();
-    }
-
-    _is_sync_up.store(true);
+    std::this_thread::sleep_for(std::chrono::microseconds(10));
+    value = _synchronization_phase_in.load();
   }
+
+  _synchronization_phase_in.compare_exchange_strong(value, 0);
+
+  _synchronization_phase_out.fetch_add(1);
 }
 
 bool K_means_processor::is_converged()
@@ -136,8 +129,8 @@ K_means_processor::K_means_processor(Buffer<float>&& values_buffer,
                                      size_t threads_number = 1)
   : _threads_number(threads_number),
     _buffer(std::forward<Buffer<float> >(values_buffer)),
-    _synchronizer(0),
-    _is_sync_up(true)
+    _synchronization_phase_in(0),
+    _synchronization_phase_out(threads_number)
 {
   size_t range_size = _buffer.size() / points_number;
   _points.reserve(points_number);
