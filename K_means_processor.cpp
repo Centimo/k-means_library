@@ -135,7 +135,7 @@ K_means_processor::K_means_processor(Buffer<float>&& values_buffer,
                                      size_t clusters_number,
                                      size_t threads_number = 1)
   : _threads_number(threads_number),
-    _buffer(values_buffer),
+    _buffer(std::forward<Buffer<float> >(values_buffer)),
     _synchronizer(0),
     _is_sync_up(true)
 {
@@ -168,7 +168,7 @@ K_means_processor::K_means_processor(Buffer<float>&& values_buffer,
   for (const auto& point_index : random_points)
   {
     _clusters.emplace_back(
-                _points[point_index]._range.make_linked_range(values_buffer),
+                _points[point_index]._range.make_linked_range(_buffer),
                 parts_number,
                 cluster_index,
                 0

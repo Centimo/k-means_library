@@ -185,8 +185,12 @@ template <>
 class Buffer<float> : public std::vector<float>
 {
 public:
-  Buffer() : std::vector<float>() {};
-  explicit Buffer(const Linked_range<Buffer, float>& range) : std::vector<float>(range.begin(), range.end()) {};
+  Buffer() = default;
+  Buffer(Buffer&& temp) = default;
+  Buffer(const Buffer& copy) = default;
+
+  explicit Buffer(const Linked_range<Buffer, float>& range) : std::vector<float>(range.begin(), range.end())
+  { };
 
   float squared_distance_between(
       const Range& first_vector,
