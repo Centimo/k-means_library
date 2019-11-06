@@ -1,5 +1,5 @@
-#ifndef TEST_ID_R_D_LIBRARY_H
-#define TEST_ID_R_D_LIBRARY_H
+#ifndef TEST_ID_R_D_K_MEANS_LIB_H
+#define TEST_ID_R_D_K_MEANS_LIB_H
 
 
 #include "K_means_processor.h"
@@ -14,4 +14,4 @@ namespace K_means_lib
     print_result_to_file(const std::string& result_filename, const std::vector<K_means_processor::Cluster_result>& result);
 }
 
-#endif //TEST_ID_R_D_LIBRARY_H
+#endif //TEST_ID_R_D_K_MEANS_LIB_H

@@ -10,21 +10,20 @@
 #include <deque>
 #include <thread>
 
-#include "Buffer.hpp"
+#include "utils.hpp"
 
 
 class K_means_processor
 {
-private:
   struct Point
   {
-    const Range _range;
+    const K_means_lib::utils::Range _range;
     size_t _cluster;
   };
 
   struct Cluster
   {
-    Atomic_buffer<float> _buffer;
+    K_means_lib::utils::Atomic_buffer<float> _buffer;
     size_t _index;
     std::atomic<size_t> _size;
 
@@ -34,7 +33,10 @@ private:
         _size(copy._size.load())
     { }
 
-    Cluster(const Linked_range<Buffer, float>& range, size_t parts_number, size_t index, size_t size)
+    Cluster(const K_means_lib::utils::Linked_range<K_means_lib::utils::Buffer, float>& range,
+            size_t parts_number,
+            size_t index,
+            size_t size)
       : _buffer(range, parts_number),
         _index(index),
         _size(size)
@@ -48,13 +50,13 @@ private:
 
   struct Thread_data
   {
-    Range _points_range;
+    K_means_lib::utils::Range _points_range;
     const size_t _index;
     mutable std::atomic<bool> _is_changed;
 
     std::thread _thread;
 
-    Thread_data(K_means_processor& processor, Range&& range, size_t index);
+    Thread_data(K_means_processor& processor, K_means_lib::utils::Range&& range, size_t index);
   };
 
 public:
@@ -70,15 +72,20 @@ private:
   void thread_worker(Thread_data& thread_data);
 
 public:
-  K_means_processor(Buffer<float>&& values_buffer, size_t points_number, size_t clusters_number, size_t threads_number);
+  K_means_processor(
+      K_means_lib::utils::Buffer<float>&& values_buffer,
+      size_t points_number,
+      size_t clusters_number,
+      size_t threads_number);
+
   ~K_means_processor();
 
   void start();
   std::vector<Cluster_result> get_result();
 
 private:
-  Buffer<float> _buffer;
-  Buffer<Point> _points;
+  K_means_lib::utils::Buffer<float> _buffer;
+  K_means_lib::utils::Buffer<Point> _points;
 
   std::vector<Cluster> _clusters;
 

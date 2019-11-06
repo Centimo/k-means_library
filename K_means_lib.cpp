@@ -1,4 +1,4 @@
-#include "library.h"
+#include "K_means_lib.h"
 
 #include <iostream>
 #include <cstdlib>
@@ -57,7 +57,7 @@ namespace K_means_lib
 
     auto points_number_optional = settings.get_optional<size_t>("Points number");
 
-    Buffer<float> data_buffer;
+    utils::Buffer<float> data_buffer;
     if (dimensions_number && points_number_optional)
     {
       data_buffer.reserve(dimensions_number * points_number_optional.value());

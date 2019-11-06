@@ -9,10 +9,10 @@
 #include "K_means_processor.h"
 
 
+using namespace K_means_lib::utils;
+
 void K_means_processor::thread_worker(Thread_data& thread_data)
 {
-  // Thread_data& thread_data = *_threads[thread_index];
-
   std::set<size_t> _linked_clusters;
   for (size_t i = thread_data._index; i < _clusters.size(); i += _threads.size())
   {
