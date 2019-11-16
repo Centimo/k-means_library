@@ -10,6 +10,8 @@
 #include <cmath>
 #include <iostream>
 
+#include <boost/dynamic_bitset.hpp>
+
 
 namespace K_means_lib::utils
 {
@@ -127,9 +129,11 @@ namespace K_means_lib::utils
       _parts = make_parts(_elements, _elements.size(), parts_number);
     }
 
-    void atomic_write(const std::function<void(Value_type&, size_t)>& function)
+    void atomic_write(
+        const std::function<void(Value_type&, size_t)>& function,
+        boost::dynamic_bitset<>& parts_processing_indicators)
     {
-      std::vector<bool> parts_processing_indicators(_parts.size(), false);
+      parts_processing_indicators.reset();
 
       bool is_done = false;
       while (!is_done)
@@ -180,6 +184,11 @@ namespace K_means_lib::utils
     void clear(const Value_type& value)
     {
       _elements.assign(_elements.size(), value);
+    }
+
+    size_t get_parts_number() const
+    {
+      return _parts.size();
     }
 
   private:

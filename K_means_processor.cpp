@@ -19,8 +19,17 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
     _linked_clusters.insert(i);
   }
 
+  std::vector<std::vector<float> > local_clusters_centers;
+  local_clusters_centers.resize(_clusters.size(), std::vector<float>(_dimensions_number, 0.0));
+
+  std::vector<size_t> local_clusters_sizes(_clusters.size(), 0);
+
+  boost::dynamic_bitset<> parts_processing_indicators(_clusters[0]._buffer.get_parts_number());
+  size_t counter = 0;
+
   do
   {
+    ++counter;
     bool is_changed_local = true;
 
     for (Point& point : thread_data._points_range.make_linked_range(_points))
@@ -63,15 +72,30 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
 
     synchronize_threads();
 
+    for (size_t i = 0; i < _clusters.size(); ++i)
+    {
+      local_clusters_sizes[i] = _clusters[i]._size.load(std::memory_order::memory_order_relaxed);
+    }
+
     for (Point& point : thread_data._points_range.make_linked_range(_points))
     {
-      _clusters[point._cluster]._buffer.atomic_write(
-          [this, &point](float& value, size_t index)
+      for (size_t i = 0; i < _dimensions_number; ++i)
+      {
+        local_clusters_centers[point._cluster][i] +=
+            point._range.make_linked_range(_buffer)[i] / local_clusters_sizes[i];
+      }
+    }
+
+    for (size_t i = 0; i < _clusters.size(); ++i)
+    {
+      _clusters[i]._buffer.atomic_write(
+          [this, &local_clusters_centers, i](float& value, size_t index)
           {
-            value +=
-                point._range.make_linked_range(_buffer)[index]
-                / _clusters[point._cluster]._size.load(std::memory_order::memory_order_relaxed);
-          });
+            value += local_clusters_centers[i][index];
+          },
+          parts_processing_indicators);
+
+      local_clusters_centers[i].assign(_dimensions_number, 0.0);
     }
 
     synchronize_threads();
@@ -84,6 +108,9 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
     synchronize_threads();
   }
   while (true);
+
+  std::scoped_lock lock(_print_sync);
+  std::cout << "Thread id: " << thread_data._index << ", counter: " << counter << std::endl;
 }
 
 
@@ -127,16 +154,16 @@ K_means_processor::K_means_processor(Buffer<float>&& values_buffer,
                                      size_t points_number,
                                      size_t clusters_number,
                                      size_t threads_number = 1)
-  : _threads_number(threads_number),
+  : _dimensions_number(values_buffer.size() / points_number),
+    _threads_number(threads_number),
     _buffer(std::forward<Buffer<float> >(values_buffer)),
     _synchronization_phase_in(0),
     _synchronization_phase_out(threads_number)
 {
-  size_t range_size = _buffer.size() / points_number;
   _points.reserve(points_number);
   for (size_t i = 0; i < points_number; ++i)
   {
-    _points.emplace_back(Point{ Range { i * range_size, range_size },0 });
+    _points.emplace_back(Point{ Range { i * _dimensions_number, _dimensions_number },0 });
   }
 
   std::mt19937 generator;
@@ -152,9 +179,9 @@ K_means_processor::K_means_processor(Buffer<float>&& values_buffer,
   _clusters.reserve(clusters_number);
 
   size_t parts_number = threads_number * 2;
-  if (range_size < parts_number)
+  if (_dimensions_number < parts_number)
   {
-    parts_number = range_size;
+    parts_number = _dimensions_number;
   }
 
   size_t cluster_index = 0;

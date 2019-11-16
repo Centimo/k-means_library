@@ -9,6 +9,7 @@
 #include <optional>
 #include <deque>
 #include <thread>
+#include <mutex>
 
 #include "utils.hpp"
 
@@ -84,6 +85,8 @@ public:
   std::vector<Cluster_result> get_result();
 
 private:
+  const size_t _dimensions_number;
+
   K_means_lib::utils::Buffer<float> _buffer;
   K_means_lib::utils::Buffer<Point> _points;
 
@@ -94,4 +97,6 @@ private:
 
   std::atomic<size_t> _synchronization_phase_in;
   std::atomic<size_t> _synchronization_phase_out;
+
+  std::mutex _print_sync;
 };
