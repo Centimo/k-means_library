@@ -7,7 +7,6 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
 #include <boost/iostreams/stream.hpp>
-#include <boost/tokenizer.hpp>
 
 namespace K_means_lib
 {
@@ -83,23 +82,48 @@ namespace K_means_lib
     }
 
     std::string_view file(mmap.const_data(), mmap.size());
-    boost::char_separator<char> sep{"\n"};
-    boost::tokenizer<boost::char_separator<char>> lines_tokenizer(file, sep);
 
     char* end = nullptr;
     size_t line_number = 1;
     size_t row_number = 1;
+    size_t current_position = 0;
+    size_t next_position = 0;
 
-    for (const auto& line_iterator : lines_tokenizer)
+    while (line_number <= points_number_optional.value())
     {
-      boost::tokenizer<boost::escaped_list_separator<char> > values_tokenizer(line_iterator);
-
-      for (const auto& value_iterator : values_tokenizer)
+      current_position = next_position;
+      next_position = file.find_first_of("\n", next_position + 1);
+      if (next_position == std::string_view::npos)
       {
-        float value = std::strtof(value_iterator.data(), &end);
-        if (end == value_iterator.data() || value == HUGE_VALF)
+        if (file.size() - 1 > current_position)
+        {
+          next_position = file.size() - 1;
+        }
+        else
+        {
+          break;
+        }
+      }
+
+      std::string_view line_view(file.data() + current_position, next_position - current_position);
+
+      auto shift = line_view.data();
+      for (float value = std::strtof(shift, &end);
+           shift != end && shift - line_view.data() < line_view.size();
+           value = std::strtof(shift, &end))
+      {
+        shift = end;
+
+        if (value == HUGE_VALF)
         {
           std::cerr << "Invalid value in line " << line_number << " row " << row_number << std::endl;
+          value = 0.0;
+        }
+
+        if (errno == ERANGE)
+        {
+          std::cout << "Range error in line " <<  line_number << " row " << row_number << std::endl;
+          errno = 0;
           value = 0.0;
         }
 
