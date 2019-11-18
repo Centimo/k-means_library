@@ -64,7 +64,7 @@ public:
   struct Cluster_result
   {
     std::vector<double> _center;
-    std::deque<size_t> _points;
+    // std::deque<size_t> _points;
   };
 
 private:

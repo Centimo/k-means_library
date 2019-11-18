@@ -243,10 +243,12 @@ std::vector<K_means_processor::Cluster_result> K_means_processor::get_result()
     result[i]._center = _clusters[i]._buffer.get_buffer();
   }
 
+  /*
   for (size_t i = 0; i < _points.size(); ++i)
   {
     result[_points[i]._cluster]._points.emplace_back(i);
   }
+   */
 
   return result;
 }

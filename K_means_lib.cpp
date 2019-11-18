@@ -181,8 +181,7 @@ namespace K_means_lib
         cluster_string += std::to_string(cluster_result._center.back()) + "\n";
       }
 
-
-
+      /*
       if (!cluster_result._points.empty())
       {
         for (size_t i = 0; i < cluster_result._points.size() - 1; ++i)
@@ -192,9 +191,9 @@ namespace K_means_lib
 
         cluster_string += std::to_string(cluster_result._points.back()) + "\n";
       }
+       */
 
       cluster_string += "\n";
-
 
       total_file_size += cluster_string.size();
       result_strings.emplace_back(std::move(cluster_string));
