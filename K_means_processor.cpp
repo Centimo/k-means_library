@@ -19,8 +19,8 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
     _linked_clusters.insert(i);
   }
 
-  std::vector<std::vector<float> > local_clusters_centers;
-  local_clusters_centers.resize(_clusters.size(), std::vector<float>(_dimensions_number, 0.0));
+  std::vector<std::vector<double> > local_clusters_centers;
+  local_clusters_centers.resize(_clusters.size(), std::vector<double>(_dimensions_number, 0.0));
 
   std::vector<size_t> local_clusters_sizes(_clusters.size(), 0);
 
@@ -35,7 +35,7 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
     for (Point& point : thread_data._points_range.make_linked_range(_points))
     {
       auto previous_cluster = point._cluster;
-      float minimal_distance = std::numeric_limits<float>::max();
+      double minimal_distance = std::numeric_limits<double>::max();
       for (const auto& cluster : _clusters)
       {
         auto current_distance =
@@ -89,7 +89,7 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
     for (size_t i = 0; i < _clusters.size(); ++i)
     {
       _clusters[i]._buffer.atomic_write(
-          [this, &local_clusters_centers, i](float& value, size_t index)
+          [this, &local_clusters_centers, i](double& value, size_t index)
           {
             value += local_clusters_centers[i][index];
           },
@@ -150,13 +150,13 @@ bool K_means_processor::is_converged()
   return true;
 }
 
-K_means_processor::K_means_processor(Buffer<float>&& values_buffer,
+K_means_processor::K_means_processor(Buffer<double>&& values_buffer,
                                      size_t points_number,
                                      size_t clusters_number,
                                      size_t threads_number = 1)
   : _dimensions_number(values_buffer.size() / points_number),
     _threads_number(threads_number),
-    _buffer(std::forward<Buffer<float> >(values_buffer)),
+    _buffer(std::forward<Buffer<double> >(values_buffer)),
     _synchronization_phase_in(0),
     _synchronization_phase_out(threads_number)
 {

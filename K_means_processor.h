@@ -24,7 +24,7 @@ class K_means_processor
 
   struct Cluster
   {
-    K_means_lib::utils::Atomic_buffer<float> _buffer;
+    K_means_lib::utils::Atomic_buffer<double> _buffer;
     size_t _index;
     std::atomic<size_t> _size;
 
@@ -34,7 +34,7 @@ class K_means_processor
         _size(copy._size.load())
     { }
 
-    Cluster(const K_means_lib::utils::Linked_range<K_means_lib::utils::Buffer, float>& range,
+    Cluster(const K_means_lib::utils::Linked_range<K_means_lib::utils::Buffer, double>& range,
             size_t parts_number,
             size_t index,
             size_t size)
@@ -63,7 +63,7 @@ class K_means_processor
 public:
   struct Cluster_result
   {
-    std::vector<float> _center;
+    std::vector<double> _center;
     std::deque<size_t> _points;
   };
 
@@ -74,7 +74,7 @@ private:
 
 public:
   K_means_processor(
-      K_means_lib::utils::Buffer<float>&& values_buffer,
+      K_means_lib::utils::Buffer<double>&& values_buffer,
       size_t points_number,
       size_t clusters_number,
       size_t threads_number);
@@ -87,7 +87,7 @@ public:
 private:
   const size_t _dimensions_number;
 
-  K_means_lib::utils::Buffer<float> _buffer;
+  K_means_lib::utils::Buffer<double> _buffer;
   K_means_lib::utils::Buffer<Point> _points;
 
   std::vector<Cluster> _clusters;

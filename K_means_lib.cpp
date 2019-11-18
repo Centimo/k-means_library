@@ -38,7 +38,7 @@ namespace K_means_lib
     }
 
     size_t dimensions_number = 0;
-    std::vector<float> point_buffer;
+    std::vector<double> point_buffer;
     auto dimensions_number_optional = settings.get_optional<size_t>("Dimensions number");
     if (!dimensions_number_optional)
     {
@@ -56,7 +56,7 @@ namespace K_means_lib
 
     auto points_number_optional = settings.get_optional<size_t>("Points number");
 
-    utils::Buffer<float> data_buffer;
+    utils::Buffer<double> data_buffer;
     if (dimensions_number && points_number_optional)
     {
       data_buffer.reserve(dimensions_number * points_number_optional.value());
@@ -108,9 +108,9 @@ namespace K_means_lib
       std::string_view line_view(file.data() + current_position, next_position - current_position);
 
       auto shift = line_view.data();
-      for (float value = std::strtof(shift, &end);
+      for (double value = std::strtod(shift, &end);
            shift != end && shift - line_view.data() < line_view.size();
-           value = std::strtof(shift, &end))
+           value = std::strtod(shift, &end))
       {
         shift = end;
 

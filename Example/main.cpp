@@ -9,7 +9,7 @@ int main()
   {
     std::random_device rd;
     std::mt19937 generator(rd());
-    std::uniform_real_distribution<float> uniform_distribution(0.0, 10.0);
+    std::uniform_real_distribution<double> uniform_distribution(-1000.0, 1000.0);
 
     std::ofstream output_stream("data.txt", std::ios::out);
     for (int i = 0; i < 1500; ++i)

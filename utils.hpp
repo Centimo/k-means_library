@@ -198,22 +198,22 @@ namespace K_means_lib::utils
 
 
   template <>
-  class Buffer<float> : public std::vector<float>
+  class Buffer<double> : public std::vector<double>
   {
   public:
     Buffer() = default;
     Buffer(Buffer&& temp) = default;
     Buffer(const Buffer& copy) = default;
 
-    explicit Buffer(const Linked_range<Buffer, float>& range) : std::vector<float>(range.begin(), range.end())
+    explicit Buffer(const Linked_range<Buffer, double>& range) : std::vector<double>(range.begin(), range.end())
     {
     };
 
-    float squared_distance_between(
+    double squared_distance_between(
         const Range& first_vector,
-        const Atomic_buffer<float>& second_vector)
+        const Atomic_buffer<double>& second_vector)
     {
-      float result = 0.0;
+      double result = 0.0;
       for (size_t i = 0; i < first_vector._length; ++i)
       {
         result += std::pow(first_vector.make_linked_range(*this)[i] - second_vector[i], 2);
