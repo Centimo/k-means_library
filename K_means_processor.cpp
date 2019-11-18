@@ -82,7 +82,7 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
       for (size_t i = 0; i < _dimensions_number; ++i)
       {
         local_clusters_centers[point._cluster][i] +=
-            point._range.make_linked_range(_buffer)[i] / local_clusters_sizes[i];
+            point._range.make_linked_range(_buffer)[i] / local_clusters_sizes[point._cluster];
       }
     }
 
