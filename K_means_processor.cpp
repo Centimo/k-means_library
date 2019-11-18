@@ -119,16 +119,13 @@ void K_means_processor::synchronize_threads()
   size_t value = _threads_number;
 
   while (_synchronization_phase_out.load() % _threads_number != 0)
-  {
-    std::this_thread::sleep_for(std::chrono::microseconds(10));
-  }
+  {  }
 
   _synchronization_phase_out.compare_exchange_strong(value, 0);
 
   value = _synchronization_phase_in.fetch_add(1) + 1;
   while (value % _threads_number != 0)
   {
-    std::this_thread::sleep_for(std::chrono::microseconds(10));
     value = _synchronization_phase_in.load();
   }
 
