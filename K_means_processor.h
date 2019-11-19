@@ -24,28 +24,27 @@ class K_means_processor
 
   struct Cluster
   {
-    K_means_lib::utils::Atomic_buffer<double> _buffer;
+    std::vector<double> _center;
     size_t _index;
     std::atomic<size_t> _size;
 
     Cluster(const Cluster& copy)
-      : _buffer(copy._buffer),
+      : _center(copy._center),
         _index(copy._index),
         _size(copy._size.load())
     { }
 
     Cluster(std::vector<double>& source,
-            size_t parts_number,
             size_t index,
             size_t size)
-      : _buffer(source, parts_number),
+      : _center(source),
         _index(index),
         _size(size)
     { }
 
-    auto& operator[] (size_t index) const
+    auto& operator[] (size_t index)
     {
-      return _buffer[index];
+      return _center[index];
     }
   };
 
@@ -60,11 +59,21 @@ class K_means_processor
     Thread_data(K_means_processor& processor, K_means_lib::utils::Range<Point>&& range, size_t index);
   };
 
-public:
-  struct Cluster_result
+  double squared_distance_between(
+      const std::vector<double>& first_point,
+      const std::vector<double>& second_point,
+      size_t size) const
   {
-    std::vector<double> _center;
-  };
+    double result = 0.0;
+    for (size_t i = 0; i < size; ++i)
+    {
+      result +=
+          (first_point[i] - second_point[i])
+          * (first_point[i] - second_point[i]);
+    }
+
+    return result;
+  }
 
 private:
   void synchronize_threads();
@@ -82,7 +91,7 @@ public:
   ~K_means_processor();
 
   void start();
-  std::vector<Cluster_result> get_result();
+  std::vector< std::vector<double> > get_result();
 
 private:
   const size_t _dimensions_number;

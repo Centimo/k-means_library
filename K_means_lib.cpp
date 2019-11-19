@@ -166,7 +166,7 @@ namespace K_means_lib
       );
   }
 
-  void print_result_to_file(const std::string& result_filename, const std::vector<K_means_processor::Cluster_result>& result)
+  void print_result_to_file(const std::string& result_filename, const std::vector< std::vector<double> >& result)
   {
     std::vector<std::string> result_strings;
     result_strings.reserve(result.size());
@@ -175,14 +175,14 @@ namespace K_means_lib
     for (const auto& cluster_result : result)
     {
       std::string cluster_string;
-      if (!cluster_result._center.empty())
+      if (!cluster_result.empty())
       {
-        for (size_t i = 0; i < cluster_result._center.size() - 1; ++i)
+        for (size_t i = 0; i < cluster_result.size() - 1; ++i)
         {
-          cluster_string += std::to_string(cluster_result._center[i]) + ", ";
+          cluster_string += std::to_string(cluster_result[i]) + ", ";
         }
 
-        cluster_string += std::to_string(cluster_result._center.back()) + "\n";
+        cluster_string += std::to_string(cluster_result.back()) + "\n";
       }
 
       cluster_string += "\n";

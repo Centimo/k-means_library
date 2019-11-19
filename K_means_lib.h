@@ -11,7 +11,7 @@ namespace K_means_lib
       const std::string& config_filename);
 
   void
-    print_result_to_file(const std::string& result_filename, const std::vector<K_means_processor::Cluster_result>& result);
+    print_result_to_file(const std::string& result_filename, const std::vector< std::vector<double> >& result);
 }
 
 #endif //TEST_ID_R_D_K_MEANS_LIB_H
