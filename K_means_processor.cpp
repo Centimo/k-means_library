@@ -97,8 +97,6 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
       local_clusters_centers[i].assign(_dimensions_number, 0.0);
     }
 
-    synchronize_threads();
-
     for (const auto cluster_index : _linked_clusters)
     {
       _clusters[cluster_index]._size.store(0, std::memory_order::memory_order_relaxed);
