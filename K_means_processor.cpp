@@ -164,7 +164,7 @@ K_means_processor::K_means_processor(std::vector< std::vector<double> >&& values
   }
 
   std::mt19937 generator;
-  std::uniform_int_distribution<size_t> uniform_distribution(0, clusters_number - 1);
+  std::uniform_int_distribution<size_t> uniform_distribution(0, points_number - 1);
   std::set<size_t> random_points;
 
   do
