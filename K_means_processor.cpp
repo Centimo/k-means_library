@@ -158,12 +158,6 @@ K_means_processor::K_means_processor(std::vector< std::vector<double> >&& values
 
   _clusters.reserve(clusters_number);
 
-  size_t parts_number = threads_number * 2;
-  if (_dimensions_number < parts_number)
-  {
-    parts_number = _dimensions_number;
-  }
-
   size_t cluster_index = 0;
   for (const auto& point_index : random_points)
   {
