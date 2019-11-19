@@ -14,10 +14,10 @@ using namespace K_means_lib::utils;
 void K_means_processor::thread_worker(Thread_data& thread_data)
 {
   std::vector<bool> _clusters_linking_table(_clusters.size(), false);
-  std::vector<size_t> _linked_clusters;
+  std::set<size_t> _linked_clusters;
   for (size_t i = thread_data._index; i < _clusters.size(); i += _threads.size())
   {
-    _linked_clusters.push_back(i);
+    _linked_clusters.emplace(i);
     _clusters_linking_table[i] = true;
   }
 
@@ -66,11 +66,14 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
     {
       for (const auto& thread : _threads)
       {
-        local_clusters_sizes[cluster_index] += thread_data._clusters_sizes[cluster_index];
-        thread_data._clusters_sizes[cluster_index] = 0;
+        local_clusters_sizes[cluster_index] += thread->_clusters_sizes[cluster_index];
+        thread->_clusters_sizes[cluster_index] = 0;
       }
 
-      _clusters[cluster_index]._center.assign(_dimensions_number, 0.0);
+      if (local_clusters_sizes[cluster_index])
+      {
+        _clusters[cluster_index]._center.assign(_dimensions_number, 0.0);
+      }
     }
 
     for (Point& point : _points)
@@ -85,6 +88,8 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
         _clusters[point._cluster][i] += _buffer[point._index][i] / local_clusters_sizes[point._cluster];
       }
     }
+
+    local_clusters_sizes.assign(_clusters.size(), 0);
 
     synchronize_threads();
   }
