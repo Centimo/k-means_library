@@ -23,11 +23,11 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
 
   std::vector<size_t> local_clusters_sizes(_clusters.size(), 0);
 
-  size_t counter = 0;
+  size_t cycles_counter = 0;
 
   do
   {
-    ++counter;
+    ++cycles_counter;
     bool is_changed_local = false;
 
     for (Point& point : thread_data._points_range)
@@ -91,7 +91,7 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
   while (true);
 
   std::scoped_lock lock(_print_sync);
-  std::cout << "Thread id: " << thread_data._index << ", counter: " << counter << std::endl;
+  std::cout << "Thread id: " << thread_data._index << ", cycles: " << cycles_counter << std::endl;
 }
 
 
