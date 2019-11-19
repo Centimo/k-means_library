@@ -30,7 +30,7 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
   do
   {
     ++counter;
-    bool is_changed_local = true;
+    bool is_changed_local = false;
 
     for (Point& point : thread_data._points_range)
     {
@@ -49,7 +49,7 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
 
       if (previous_cluster != point._cluster)
       {
-        is_changed_local = false;
+        is_changed_local = true;
       }
 
       _clusters[point._cluster]._size.fetch_add(1, std::memory_order::memory_order_relaxed);
@@ -137,7 +137,7 @@ bool K_means_processor::is_converged()
 {
   for (const auto& thread_data : _threads)
   {
-    if (!thread_data->_is_changed.load())
+    if (thread_data->_is_changed.load())
     {
       return false;
     }
