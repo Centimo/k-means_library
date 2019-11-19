@@ -38,7 +38,6 @@ namespace K_means_lib
     }
 
     size_t dimensions_number = 0;
-    std::vector<double> point_buffer;
     auto dimensions_number_optional = settings.get_optional<size_t>("Dimensions number");
     if (!dimensions_number_optional)
     {
@@ -49,17 +48,20 @@ namespace K_means_lib
       dimensions_number = dimensions_number_optional.value();
     }
 
-    if (dimensions_number)
-    {
-      point_buffer.reserve(dimensions_number);
-    }
-
     auto points_number_optional = settings.get_optional<size_t>("Points number");
 
-    utils::Buffer<double> data_buffer;
-    if (dimensions_number && points_number_optional)
+    std::vector< std::vector<double> > data_buffer;
+    if (points_number_optional)
     {
-      data_buffer.reserve(dimensions_number * points_number_optional.value());
+      data_buffer.reserve(points_number_optional.value());
+    }
+
+    if (dimensions_number)
+    {
+      for (auto& point_vector : data_buffer)
+      {
+        point_vector.reserve(dimensions_number);
+      }
     }
 
     auto threads_number_optional = settings.get_optional<size_t>("Threads number");
@@ -91,6 +93,9 @@ namespace K_means_lib
 
     while (line_number <= points_number_optional.value())
     {
+      data_buffer.emplace_back(std::vector<double>());
+      auto& point_vector = data_buffer.back();
+
       current_position = next_position;
       next_position = file.find_first_of("\n", next_position + 1);
       if (next_position == std::string_view::npos)
@@ -127,24 +132,22 @@ namespace K_means_lib
           value = 0.0;
         }
 
-        point_buffer.emplace_back(value);
+        point_vector.emplace_back(value);
         ++row_number;
       }
 
-      if (dimensions_number && dimensions_number != point_buffer.size())
+      if (dimensions_number && dimensions_number != point_vector.size())
       {
         std::cerr << "Invalid line " << line_number << " length." << std::endl;
-        point_buffer.resize(dimensions_number, 0.0);
+        point_vector.resize(dimensions_number, 0.0);
       }
       else if (!dimensions_number)
       {
-        dimensions_number = point_buffer.size();
+        dimensions_number = point_vector.size();
       }
 
-      data_buffer.insert(data_buffer.end(), point_buffer.begin(), point_buffer.end());
-
-      point_buffer.clear();
       row_number = 1;
+
       ++line_number;
     }
 
@@ -156,6 +159,7 @@ namespace K_means_lib
     return
       std::make_unique<K_means_processor>(
         std::move(data_buffer),
+        dimensions_number,
         line_number - 1,
         clusters_number_optional.value(),
         threads_number
@@ -180,18 +184,6 @@ namespace K_means_lib
 
         cluster_string += std::to_string(cluster_result._center.back()) + "\n";
       }
-
-      /*
-      if (!cluster_result._points.empty())
-      {
-        for (size_t i = 0; i < cluster_result._points.size() - 1; ++i)
-        {
-          cluster_string += std::to_string(cluster_result._points[i]) + ", ";
-        }
-
-        cluster_string += std::to_string(cluster_result._points.back()) + "\n";
-      }
-       */
 
       cluster_string += "\n";
 

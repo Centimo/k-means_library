@@ -15,96 +15,93 @@
 
 namespace K_means_lib::utils
 {
-  template <template <typename> class Container_type, typename Value_type>
-  class Linked_range;
-
   template <typename Value_type>
-  class Buffer : public std::vector<Value_type>
-  { };
-
-  struct Range
+  class Range
   {
-    size_t _first_element_index;
-    size_t _length;
-
-    template <template <typename> class Container_type, typename Value_type>
-    Linked_range<Container_type, Value_type> make_linked_range(Container_type<Value_type>& buffer) const
-    {
-      return Linked_range<Container_type, Value_type>(*this, buffer);
-    }
-  };
-
-  template <template <typename> class Container_type, typename Value_type>
-  class Linked_range : public Range
-  {
-    Container_type<Value_type>& _buffer;
+    Value_type& _first_element;
+    const size_t _length;
 
   public:
-    Linked_range(const Range& range, Container_type<Value_type>& buffer)
-        : Range(range),
-          _buffer(buffer)
-    {
-    }
+    Range(Value_type& first_element, size_t length)
+        : _first_element(first_element),
+          _length(length)
+    { }
 
-
+    inline
     const Value_type& operator[](size_t index) const
     {
-      return _buffer[_first_element_index + index];
+      return *(&_first_element + index);
     }
 
+    inline
     Value_type& operator[](size_t index)
     {
-      return _buffer[_first_element_index + index];
+      return *(&_first_element + index);
     }
 
     [[nodiscard]]
     auto begin() const
     {
-      return _buffer.begin() + _first_element_index;
+      return &_first_element;
     }
 
     [[nodiscard]]
     auto end() const
     {
-      return _buffer.begin() + _first_element_index + _length;
+      return (&_first_element + _length);
+    }
+
+    void print() const
+    {
+      std::cout  << (*this)[0];
+      for (size_t i = 1; i < _length; ++i)
+      {
+        std::cout <<  " " << (*this)[i];
+      }
+
+      std::cout  << std::endl;
+    };
+
+    size_t size() const
+    {
+      return _length;
     }
   };
 
   template <typename Value_type>
-  class Atomic_buffer
+  class Atomic_buffer : public std::vector<double>
   {
     struct Part
     {
-      Linked_range<Buffer, Value_type> _range;
+      Range<Value_type> _range;
       mutable std::atomic_flag _is_busy;
 
       Part(const Part& copy)
           : _range(copy._range),
             _is_busy(ATOMIC_FLAG_INIT)
-      {
-      }
+      { }
 
       explicit
-      Part(Linked_range<Buffer, Value_type>&& range)
-          : _range(std::forward<Linked_range<Buffer, Value_type> >(range)),
+      Part(Range<Value_type>&& range)
+          : _range(std::forward<Range<Value_type> >(range)),
             _is_busy(ATOMIC_FLAG_INIT)
-      {
-      }
+      { }
     };
 
-    static std::vector<Part> make_parts(Buffer<Value_type>& buffer, size_t elements_number, size_t parts_number)
+    static std::vector<Part> make_parts(std::vector<double>& container, size_t parts_number)
     {
       std::vector<Part> result;
       result.reserve(parts_number);
-      const size_t elements_per_part = elements_number / parts_number;
-      const size_t parts_with_additional_element = elements_number % parts_number;
+      const size_t elements_per_part = container.size() / parts_number;
+      const size_t parts_with_additional_element = container.size() % parts_number;
 
       for (size_t i = 0; i < parts_with_additional_element; ++i)
       {
         result.emplace_back(
             Part(
-                Linked_range<Buffer, Value_type>(
-                    Range{i * (elements_per_part + 1), elements_per_part + 1}, buffer
+                Range<Value_type>(
+                    container[i * (elements_per_part + 1)],
+                    elements_per_part + 1
                 )));
       }
 
@@ -112,10 +109,9 @@ namespace K_means_lib::utils
       {
         result.emplace_back(
             Part(
-                Linked_range<Buffer, Value_type>(
-                    Range{parts_with_additional_element * (elements_per_part + 1) + i * elements_per_part,
-                          elements_per_part},
-                    buffer
+                Range<Value_type>(
+                    container[parts_with_additional_element * (elements_per_part + 1) + i * elements_per_part],
+                    elements_per_part
                 )));
       }
 
@@ -123,10 +119,10 @@ namespace K_means_lib::utils
     }
 
   public:
-    explicit Atomic_buffer(const Linked_range<Buffer, Value_type>& range, size_t parts_number)
-        : _elements(range)
+    explicit Atomic_buffer(std::vector<double>& source, size_t parts_number)
+        : std::vector<double>(source)
     {
-      _parts = make_parts(_elements, _elements.size(), parts_number);
+      _parts = make_parts(*this, parts_number);
     }
 
     void atomic_write(
@@ -150,9 +146,9 @@ namespace K_means_lib::utils
 
           if (!part._is_busy.test_and_set())
           {
-            for (size_t i = 0; i < part._range._length; ++i)
+            for (size_t i = 0; i < part._range.size(); ++i)
             {
-              function(part._range[i], part._range._first_element_index + i);
+              function(part._range[i], part_index * part._range.size() + i);
             }
 
             parts_processing_indicators[part_index] = true;
@@ -166,24 +162,14 @@ namespace K_means_lib::utils
       }
     }
 
-    auto& operator[](size_t index)
-    {
-      return _elements[index];
-    }
-
-    const auto& operator[](size_t index) const
-    {
-      return _elements[index];
-    }
-
     std::vector<Value_type> get_buffer()
     {
-      return std::move(_elements);
+      return std::move(*this);
     }
 
     void clear(const Value_type& value)
     {
-      _elements.assign(_elements.size(), value);
+      (*this).assign(this->size(), value);
     }
 
     size_t get_parts_number() const
@@ -191,35 +177,20 @@ namespace K_means_lib::utils
       return _parts.size();
     }
 
-  private:
-    std::vector<Part> _parts;
-    Buffer<Value_type> _elements;
-  };
-
-
-  template <>
-  class Buffer<double> : public std::vector<double>
-  {
-  public:
-    Buffer() = default;
-    Buffer(Buffer&& temp) = default;
-    Buffer(const Buffer& copy) = default;
-
-    explicit Buffer(const Linked_range<Buffer, double>& range) : std::vector<double>(range.begin(), range.end())
-    {
-    };
-
-    double squared_distance_between(
-        const Range& first_vector,
-        const Atomic_buffer<double>& second_vector)
+    double squared_distance_between(const std::vector<double>& point, size_t size) const
     {
       double result = 0.0;
-      for (size_t i = 0; i < first_vector._length; ++i)
+      for (size_t i = 0; i < size; ++i)
       {
-        result += std::pow(first_vector.make_linked_range(*this)[i] - second_vector[i], 2);
+        result +=
+            (point[i] - (*this)[i])
+            * (point[i] - (*this)[i]);
       }
 
       return result;
     }
+
+  private:
+    std::vector<Part> _parts;
   };
 }

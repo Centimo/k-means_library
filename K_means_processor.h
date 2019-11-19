@@ -18,7 +18,7 @@ class K_means_processor
 {
   struct Point
   {
-    const K_means_lib::utils::Range _range;
+    const size_t _index;
     size_t _cluster;
   };
 
@@ -34,11 +34,11 @@ class K_means_processor
         _size(copy._size.load())
     { }
 
-    Cluster(const K_means_lib::utils::Linked_range<K_means_lib::utils::Buffer, double>& range,
+    Cluster(std::vector<double>& source,
             size_t parts_number,
             size_t index,
             size_t size)
-      : _buffer(range, parts_number),
+      : _buffer(source, parts_number),
         _index(index),
         _size(size)
     { }
@@ -51,20 +51,19 @@ class K_means_processor
 
   struct Thread_data
   {
-    K_means_lib::utils::Range _points_range;
+    K_means_lib::utils::Range<Point> _points_range;
     const size_t _index;
     mutable std::atomic<bool> _is_changed;
 
     std::thread _thread;
 
-    Thread_data(K_means_processor& processor, K_means_lib::utils::Range&& range, size_t index);
+    Thread_data(K_means_processor& processor, K_means_lib::utils::Range<Point>&& range, size_t index);
   };
 
 public:
   struct Cluster_result
   {
     std::vector<double> _center;
-    // std::deque<size_t> _points;
   };
 
 private:
@@ -74,7 +73,8 @@ private:
 
 public:
   K_means_processor(
-      K_means_lib::utils::Buffer<double>&& values_buffer,
+      std::vector< std::vector<double> >&& values_buffer,
+      size_t dimensions_number,
       size_t points_number,
       size_t clusters_number,
       size_t threads_number);
@@ -87,8 +87,8 @@ public:
 private:
   const size_t _dimensions_number;
 
-  K_means_lib::utils::Buffer<double> _buffer;
-  K_means_lib::utils::Buffer<Point> _points;
+  std::vector< std::vector<double> > _buffer;
+  std::vector<Point> _points;
 
   std::vector<Cluster> _clusters;
 
