@@ -203,7 +203,7 @@ void K_means_processor::start()
   }
 }
 
-std::vector< std::vector<float> > K_means_processor::get_result()
+std::vector< std::vector<double> > K_means_processor::get_result()
 {
   for (auto& thread : _threads)
   {

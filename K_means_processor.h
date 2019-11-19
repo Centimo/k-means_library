@@ -33,8 +33,7 @@ class K_means_processor
     { }
 
     Cluster(std::vector<double>& source,
-            size_t index,
-            size_t size)
+            size_t index)
       : _center(source),
         _index(index)
     { }
