@@ -197,7 +197,7 @@ void K_means_processor::start()
             _points[threads_with_additional_point * (points_per_thread + 1) + i * points_per_thread],
             points_per_thread
         ),
-        i,
+        threads_with_additional_point + i,
         _clusters.size()
     );
   }
