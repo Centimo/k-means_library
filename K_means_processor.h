@@ -26,20 +26,17 @@ class K_means_processor
   {
     std::vector<double> _center;
     size_t _index;
-    std::atomic<size_t> _size;
 
     Cluster(const Cluster& copy)
       : _center(copy._center),
-        _index(copy._index),
-        _size(copy._size.load())
+        _index(copy._index)
     { }
 
     Cluster(std::vector<double>& source,
             size_t index,
             size_t size)
       : _center(source),
-        _index(index),
-        _size(size)
+        _index(index)
     { }
 
     auto& operator[] (size_t index)
@@ -53,10 +50,14 @@ class K_means_processor
     K_means_lib::utils::Range<Point> _points_range;
     const size_t _index;
     mutable std::atomic<bool> _is_changed;
+    std::vector<size_t> _clusters_sizes;
 
     std::thread _thread;
 
-    Thread_data(K_means_processor& processor, K_means_lib::utils::Range<Point>&& range, size_t index);
+    Thread_data(K_means_processor& processor,
+                K_means_lib::utils::Range<Point>&& range,
+                size_t index,
+                size_t clusters_number);
   };
 
   double squared_distance_between(
