@@ -81,10 +81,10 @@ namespace K_means_lib::utils
       : std::vector<double>(copy)
     { }
 
-    double squared_distance_to(const std::vector<double>& second_point) const
+    double squared_distance_to(const std::vector<double>& second_point, size_t size) const
     {
       double result = 0.0;
-      for (size_t i = 0; i < this->size(); ++i)
+      for (size_t i = 0; i < size; ++i)
       {
         result +=
             ((*this)[i] - second_point[i])
