@@ -62,22 +62,6 @@ class K_means_processor
                 size_t clusters_number);
   };
 
-  double squared_distance_between(
-      const std::vector<double>& first_point,
-      const std::vector<double>& second_point,
-      size_t size) const
-  {
-    double result = 0.0;
-    for (size_t i = 0; i < size; ++i)
-    {
-      result +=
-          (first_point[i] - second_point[i])
-          * (first_point[i] - second_point[i]);
-    }
-
-    return result;
-  }
-
 private:
   void synchronize_threads();
   bool is_converged();
