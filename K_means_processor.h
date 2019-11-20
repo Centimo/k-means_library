@@ -24,24 +24,27 @@ class K_means_processor
 
   struct Cluster
   {
-    std::vector<double> _center;
-    size_t _index;
+    K_means_lib::utils::Point _center;
+    size_t _points_number;
 
-    Cluster(const Cluster& copy)
-      : _center(copy._center),
-        _index(copy._index)
+    Cluster(const Cluster& copy) = default;
+
+    explicit
+    Cluster(const std::vector<double>& source)
+        : _center(source),
+          _points_number(0)
     { }
 
-    Cluster(std::vector<double>& source,
-            size_t index)
-      : _center(source),
-        _index(index)
+    explicit
+    Cluster(size_t length)
+      : _points_number(0),
+        _center(length, 0.0)
     { }
 
-    auto& operator[] (size_t index)
-    {
-      return _center[index];
-    }
+    void clear_center();
+    void clear_points_number();
+    void clear_full();
+    auto& operator[] (size_t index);
   };
 
   struct Thread_data
@@ -49,7 +52,7 @@ class K_means_processor
     K_means_lib::utils::Range<Point> _points_range;
     const size_t _index;
     mutable std::atomic<bool> _is_changed;
-    std::vector<size_t> _clusters_sizes;
+    std::vector<Cluster> _clusters;
 
     std::thread _thread;
 

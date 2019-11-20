@@ -166,10 +166,7 @@ K_means_processor::K_means_processor(std::vector< std::vector<double> >&& values
   size_t cluster_index = 0;
   for (const auto& point_index : random_points)
   {
-    _clusters.emplace_back(
-                _buffer[_points[point_index]._index],
-                cluster_index
-              );
+    _clusters.emplace_back(_buffer[_points[point_index]._index]);
 
     ++cluster_index;
   }
@@ -247,5 +244,30 @@ K_means_processor::Thread_data::Thread_data(K_means_processor& processor,
     _index(index),
     _is_changed(false),
     _thread(&K_means_processor::thread_worker, &processor, std::ref(*this)),
-    _clusters_sizes(clusters_number, 0)
+    _clusters(clusters_number, Cluster{processor._dimensions_number})
 { }
+
+
+void K_means_processor::Cluster::clear_center()
+{
+  if (_points_number)
+  {
+    _center.assign(_center.size(), 0.0);
+  }
+}
+
+void K_means_processor::Cluster::clear_points_number()
+{
+  _points_number = 0;
+}
+
+void K_means_processor::Cluster::clear_full()
+{
+  _center.assign(_center.size(), 0.0);
+  clear_points_number();
+}
+
+auto& K_means_processor::Cluster::operator[] (size_t index)
+{
+  return _center[index];
+}
