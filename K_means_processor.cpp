@@ -24,7 +24,7 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
 
     for (auto& point_holder : thread_data._points_holders_range)
     {
-      auto previous_cluster = point_holder._cluster;
+      auto previous_cluster = point_holder._cluster_index;
       double minimal_distance = std::numeric_limits<double>::max();
       for (size_t cluster_index = 0; cluster_index < local_clusters.size(); ++cluster_index)
       {
@@ -35,23 +35,23 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
         if (current_distance < minimal_distance)
         {
           minimal_distance = current_distance;
-          point_holder._cluster = cluster_index;
+          point_holder._cluster_index = cluster_index;
         }
       }
 
-      if (previous_cluster != point_holder._cluster)
+      if (previous_cluster != point_holder._cluster_index)
       {
         is_changed_local = true;
       }
 
-      thread_data._clusters[point_holder._cluster]._points_number += 1;
+      thread_data._clusters[point_holder._cluster_index]._points_number += 1;
     }
 
     thread_data._is_changed.store(is_changed_local);
 
-    for (size_t i = 0; i < thread_data._clusters.size(); ++i)
+    for (auto& cluster : thread_data._clusters)
     {
-      thread_data._clusters[i].clear_center();
+      cluster.clear_center();
     }
 
     synchronize_threads();
@@ -76,14 +76,14 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
 
     for (auto& point_holder : thread_data._points_holders_range)
     {
-      thread_data._clusters[point_holder._cluster]._center.sum_with_division(
+      thread_data._clusters[point_holder._cluster_index]._center.sum_with_division(
           point_holder._point,
-          local_clusters[point_holder._cluster]._points_number);
+          local_clusters[point_holder._cluster_index]._points_number);
     }
 
     synchronize_threads();
 
-    for (size_t i = 0; i < _clusters.size(); ++i)
+    for (size_t i = 0; i < local_clusters.size(); ++i)
     {
       for (const auto& thread : _threads)
       {
@@ -91,9 +91,9 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
       }
     }
 
-    for (size_t i = 0; i < thread_data._clusters.size(); ++i)
+    for (auto& cluster : thread_data._clusters)
     {
-      thread_data._clusters[i].clear_points_number();
+      cluster.clear_points_number();
     }
   }
 

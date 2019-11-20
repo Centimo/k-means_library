@@ -19,11 +19,11 @@ class K_means_processor
   struct Point_holder
   {
     K_means_lib::utils::Point _point;
-    size_t _cluster;
+    size_t _cluster_index;
 
     explicit
     Point_holder(size_t cluster_index)
-      : _cluster(cluster_index)
+      : _cluster_index(cluster_index)
     { }
   };
 
