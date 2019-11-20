@@ -158,7 +158,7 @@ namespace K_means_lib
 
     return
       std::make_unique<K_means_processor>(
-        std::move(data_buffer),
+        data_buffer,
         dimensions_number,
         line_number - 1,
         clusters_number_optional.value(),
