@@ -13,19 +13,11 @@ using namespace K_means_lib::utils;
 
 void K_means_processor::thread_worker(Thread_data& thread_data)
 {
-  std::vector<bool> _clusters_linking_table(_clusters.size(), false);
-  std::set<size_t> _linked_clusters;
-  for (size_t i = thread_data._index; i < _clusters.size(); i += _threads.size())
-  {
-    _linked_clusters.emplace(i);
-    _clusters_linking_table[i] = true;
-  }
-
-  std::vector<size_t> local_clusters_sizes(_clusters.size(), 0);
+  std::vector<Cluster> local_clusters(_clusters);
 
   size_t cycles_counter = 0;
 
-  do
+  while (true)
   {
     ++cycles_counter;
     bool is_changed_local = false;
@@ -34,14 +26,16 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
     {
       auto previous_cluster = point._cluster;
       double minimal_distance = std::numeric_limits<double>::max();
-      for (const auto& cluster : _clusters)
+      for (size_t cluster_index = 0; cluster_index < local_clusters.size(); ++cluster_index)
       {
-        auto current_distance = squared_distance_between(cluster._center, _buffer[point._index], _dimensions_number);
+        auto current_distance =
+            local_clusters[cluster_index]._center.
+              squared_distance_to(_buffer[point._index], _dimensions_number);
 
         if (current_distance < minimal_distance)
         {
           minimal_distance = current_distance;
-          point._cluster = cluster._index;
+          point._cluster = cluster_index;
         }
       }
 
@@ -50,10 +44,15 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
         is_changed_local = true;
       }
 
-      thread_data._clusters_sizes[point._cluster] += 1;
+      thread_data._clusters[point._cluster]._points_number += 1;
     }
 
     thread_data._is_changed.store(is_changed_local);
+
+    for (size_t i = 0; i < thread_data._clusters.size(); ++i)
+    {
+      thread_data._clusters[i].clear_center();
+    }
 
     synchronize_threads();
 
@@ -62,38 +61,41 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
       break;
     }
 
-    for (const auto cluster_index : _linked_clusters)
+    for (auto& local_cluster : local_clusters)
+    {
+      local_cluster.clear_full();
+    };
+
+    for (size_t cluster_index = 0; cluster_index < local_clusters.size(); ++cluster_index)
     {
       for (const auto& thread : _threads)
       {
-        local_clusters_sizes[cluster_index] += thread->_clusters_sizes[cluster_index];
-        thread->_clusters_sizes[cluster_index] = 0;
-      }
-
-      if (local_clusters_sizes[cluster_index])
-      {
-        _clusters[cluster_index]._center.assign(_dimensions_number, 0.0);
+        local_clusters[cluster_index]._points_number += thread->_clusters[cluster_index]._points_number;
       }
     }
 
-    for (Point& point : _points)
+    for (Point& point : thread_data._points_range)
     {
-      if (!_clusters_linking_table[point._cluster])
-      {
-        continue;
-      }
-
-      for (size_t i = 0; i < _dimensions_number; ++i)
-      {
-        _clusters[point._cluster][i] += _buffer[point._index][i] / local_clusters_sizes[point._cluster];
-      }
+      thread_data._clusters[point._cluster]._center.sum_with_division(
+          _buffer[point._index],
+          local_clusters[point._cluster]._points_number);
     }
-
-    local_clusters_sizes.assign(_clusters.size(), 0);
 
     synchronize_threads();
+
+    for (size_t i = 0; i < _clusters.size(); ++i)
+    {
+      for (const auto& thread : _threads)
+      {
+        local_clusters[i]._center.sum(thread->_clusters[i]._center);
+      }
+    }
+
+    for (size_t i = 0; i < thread_data._clusters.size(); ++i)
+    {
+      thread_data._clusters[i].clear_points_number();
+    }
   }
-  while (true);
 
   std::scoped_lock lock(_print_sync);
   std::cout << "Thread id: " << thread_data._index << ", cycles: " << cycles_counter << std::endl;
