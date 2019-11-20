@@ -67,4 +67,54 @@ namespace K_means_lib::utils
       return _length;
     }
   };
+
+  class Point : public std::vector<double>
+  {
+  public:
+    Point() : std::vector<double>()
+    { }
+
+    Point(size_t size, double value) : std::vector<double>(size, value)
+    { }
+
+    Point(const std::vector<double>& copy)
+      : std::vector<double>(copy)
+    { }
+
+    double squared_distance_to(const std::vector<double>& second_point) const
+    {
+      double result = 0.0;
+      for (size_t i = 0; i < this->size(); ++i)
+      {
+        result +=
+            ((*this)[i] - second_point[i])
+            * ((*this)[i] - second_point[i]);
+      }
+
+      return result;
+    }
+
+    Point& sum_with_division(const std::vector<double>& point, size_t divider)
+    {
+      if (divider)
+      {
+        for (size_t i = 0; i < this->size(); ++i)
+        {
+          (*this)[i] += point[i] / divider;
+        }
+      }
+
+      return (*this);
+    }
+
+    Point& sum(const std::vector<double>& point)
+    {
+      for (size_t i = 0; i < this->size(); ++i)
+      {
+        (*this)[i] += point[i];
+      }
+
+      return (*this);
+    }
+  };
 }
