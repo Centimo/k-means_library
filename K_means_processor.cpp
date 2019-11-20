@@ -97,6 +97,11 @@ void K_means_processor::thread_worker(Thread_data& thread_data)
     }
   }
 
+  if (thread_data._index == 0)
+  {
+    thread_data._clusters = std::move(local_clusters);
+  }
+
   std::scoped_lock lock(_print_sync);
   std::cout << "Thread id: " << thread_data._index << ", cycles: " << cycles_counter << std::endl;
 }
@@ -217,11 +222,11 @@ std::vector< std::vector<double> > K_means_processor::get_result()
     }
   }
 
-  std::vector< std::vector<double> > result(_clusters.size());
+  std::vector< std::vector<double> > result(_threads.front()->_clusters.size());
 
-  for (size_t i = 0; i < _clusters.size(); ++i)
+  for (size_t i = 0; i < _threads.front()->_clusters.size(); ++i)
   {
-    result[i] = _clusters[i]._center;
+    result[i] = _threads.front()->_clusters[i]._center;
   }
 
   return result;
